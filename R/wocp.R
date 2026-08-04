@@ -49,6 +49,13 @@
 #' @references Iparragirre, A., Barrio, I., Aramendi, J. and Arostegui, I. (2022). Estimation of cut-off points under complex-sampling design data. \emph{SORT-Statistics and Operations Research Transactions} \bold{46}(1), 137--158.
 #' @references Lopez-Raton, M., Rodriguez-Alvarez, M.X, Cadarso-Suarez, C. and Gude-Sampedro, F. (2014). OptimalCutpoints: An R Package for Selecting Optimal Cutpoints in Diagnostic Tests. \emph{Journal of Statistical Software} \bold{61}(8), 1--36.
 #'
+#' @param na.rm A logical value indicating how to handle observations with a
+#' missing response, predicted probability or sampling weight. If \code{FALSE}
+#' (the default), such observations raise an error. If \code{TRUE}, they are
+#' removed and a warning of class \code{svyROC_missing_removed} is signalled;
+#' note that the resulting estimate then refers to the complete-case
+#' sub-population rather than to the population the sampling weights describe,
+#' and is consistent for the latter only under missingness completely at random.
 #' @returns The output of this function is an object of class `wocp`. This object is a list that contains information about the following 4 elements:
 #' - `tags`: a list containing two elements with the following information:
 #'   - `tag.event`: a character string indicating the event of interest.
@@ -90,7 +97,7 @@
 wocp <- function(response.var, phat.var, weights.var = NULL,
                  tag.event = NULL, tag.nonevent = NULL,
                  method = c("Youden", "MaxProdSpSe", "ROC01", "MaxEfficiency"),
-                 data = NULL, design = NULL){
+                 data = NULL, design = NULL, na.rm = FALSE){
 
   if(missing(method) || is.null(method)) {
     stop("'method' argument required.")
@@ -129,6 +136,13 @@ wocp <- function(response.var, phat.var, weights.var = NULL,
   if(length(response.var) != length(phat.var) || length(response.var) != length(weights.var)){
     stop("Vectors indicating the responses, predicted probabilities and sampling weights must be the same length.")
   }
+
+  na.out <- handle.missing(list(response.var = response.var, phat.var = phat.var,
+                                weights.var = weights.var),
+                           na.rm = na.rm, two.class = "response.var")
+  response.var <- na.out$vars$response.var
+  phat.var <- na.out$vars$phat.var
+  weights.var <- na.out$vars$weights.var
 
   # Missing tags:
   if(is.null(tag.nonevent)){

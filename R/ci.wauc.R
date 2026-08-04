@@ -15,6 +15,13 @@
 #' and \code{boot.ci = 'quantile'} for confidence intervals based on quantiles. Default is \code{boot.ci = 'normal'}. Only for \code{method = 'subbootstrap'}.     
 #' @param conf.level A numeric value between 0 and 1 indicating the confidence level. Default is \code{conf.level = 0.95}, resulting in a 95% CI.
 #'
+#' @param na.rm A logical value indicating how to handle observations with a
+#' missing response, predicted probability or sampling weight. If \code{FALSE}
+#' (the default), such observations raise an error. If \code{TRUE}, they are
+#' removed and a warning of class \code{svyROC_missing_removed} is signalled;
+#' note that the resulting estimate then refers to the complete-case
+#' sub-population rather than to the population the sampling weights describe,
+#' and is consistent for the latter only under missingness completely at random.
 #' @return The output object of this function is a list of 2 elements containing the following information:
 #' - `wauc`: a numeric value indicating the weighted point estimate of the AUC.
 #' - `ci`: a numeric vector indicating the lower and upper values of the confidence interval.
@@ -53,7 +60,7 @@
 
 ci.wauc <- function(design, response.var, phat.var, tag.event = NULL, tag.nonevent = NULL,
                     method = c("JKn","subbootstrap"), boot.B=1000, boot.ci = c("normal", "quantile"), 
-                    conf.level = 0.95){
+                    conf.level = 0.95, na.rm = FALSE){
   
   data <- get(design$call$data)
   weights <- as.character(design$call$weights[2])
@@ -72,6 +79,15 @@ ci.wauc <- function(design, response.var, phat.var, tag.event = NULL, tag.noneve
   if(length(response.var) != length(phat.var) || length(response.var) != length(weights.var)){
     stop("Vectors indicating the responses, predicted probabilities and sampling weights must be the same length.")
   }
+
+  na.out <- handle.missing(list(response.var = response.var,
+                                phat.var = phat.var,
+                                weights.var = weights.var),
+                           na.rm = na.rm, two.class = "response.var")
+  response.var <- na.out$vars$response.var
+  phat.var <- na.out$vars$phat.var
+  weights.var <- na.out$vars$weights.var
+  na.keep <- na.out$keep
   
   # Missing tags:
   if(is.null(tag.nonevent)){
@@ -102,7 +118,7 @@ ci.wauc <- function(design, response.var, phat.var, tag.event = NULL, tag.noneve
   if(method == "subbootstrap"){
     RB.boot.w <- weights(survey::as.svrepdesign(design = design, type = method, replicates=boot.B),"analysis")
     RB.aucw.b <- as.vector(apply(
-      RB.boot.w, 2,
+      RB.boot.w[na.keep, , drop = FALSE], 2,
       function(x) wauc(
         response.var = response.var,
         phat.var = phat.var,
@@ -125,7 +141,7 @@ ci.wauc <- function(design, response.var, phat.var, tag.event = NULL, tag.noneve
     if(method == "JKn"){
       JKn.w <- weights(survey::as.svrepdesign(design = design, type = method),"analysis")
       JKn.aucw.1out <- as.vector(apply(
-        JKn.w, 2,
+        JKn.w[na.keep, , drop = FALSE], 2,
         function(x) wauc(
           response.var = response.var,
           phat.var = phat.var,

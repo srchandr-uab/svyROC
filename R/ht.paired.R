@@ -15,6 +15,13 @@
 #' \code{method = 'JKn'} or \code{method = 'subbootstrap'}. Default is \code{method = 'JKn'}.
 #' @param boot.B A numeric value indicating the number of bootstrap resamples to be considered. Default is \code{boot.B=1000}. Only for \code{method = 'subbootstrap'}. 
 #'
+#' @param na.rm A logical value indicating how to handle observations with a
+#' missing response, predicted probability or sampling weight. If \code{FALSE}
+#' (the default), such observations raise an error. If \code{TRUE}, they are
+#' removed and a warning of class \code{svyROC_missing_removed} is signalled;
+#' note that the resulting estimate then refers to the complete-case
+#' sub-population rather than to the population the sampling weights describe,
+#' and is consistent for the latter only under missingness completely at random.
 #' @returns The output object of this function is a list of 5 elements containing the following information:
 #' - `wauc.1`: a numeric value indicating the weighted point estimate of the AUC for model 1.
 #' - `wauc.2`: a numeric value indicating the weighted point estimate of the AUC for model 2.
@@ -61,7 +68,7 @@
 ht.paired <- function(design, response.var, phat.var.1, phat.var.2, 
                       tag.event = NULL, tag.nonevent = NULL,
                       alternative = c("two.sided", "greater", "less"),
-                      method = c("JKn","subbootstrap"), boot.B=1000){
+                      method = c("JKn","subbootstrap"), boot.B=1000, na.rm = FALSE){
   
   data <- get(design$call$data)
   weights <- as.character(design$call$weights[2])
@@ -84,6 +91,17 @@ ht.paired <- function(design, response.var, phat.var.1, phat.var.2,
   if(length(response.var) != length(phat.var.1) || length(response.var) != length(phat.var.2) || length(response.var) != length(weights.var)){
     stop("Vectors indicating the responses, predicted probabilities and sampling weights must be the same length.")
   }
+
+  na.out <- handle.missing(list(response.var = response.var,
+                                phat.var.1 = phat.var.1,
+                                phat.var.2 = phat.var.2,
+                                weights.var = weights.var),
+                           na.rm = na.rm, two.class = "response.var")
+  response.var <- na.out$vars$response.var
+  phat.var.1 <- na.out$vars$phat.var.1
+  phat.var.2 <- na.out$vars$phat.var.2
+  weights.var <- na.out$vars$weights.var
+  na.keep <- na.out$keep
   
   # Missing tags:
   if(is.null(tag.nonevent)){
@@ -115,7 +133,7 @@ ht.paired <- function(design, response.var, phat.var.1, phat.var.2,
   if(method == "JKn"){
     JKn.w <- stats::weights(survey::as.svrepdesign(design = design, type = method),"analysis")
     JKn.aucw.1 <- as.vector(apply(
-      JKn.w, 2,
+      JKn.w[na.keep, , drop = FALSE], 2,
       function(x) wauc(
         response.var = response.var,
         phat.var = phat.var.1,
@@ -125,7 +143,7 @@ ht.paired <- function(design, response.var, phat.var.1, phat.var.2,
       )$AUCw[1]
     ))
     JKn.aucw.2 <- as.vector(apply(
-      JKn.w, 2,
+      JKn.w[na.keep, , drop = FALSE], 2,
       function(x) wauc(
         response.var = response.var,
         phat.var = phat.var.2,
@@ -157,7 +175,7 @@ ht.paired <- function(design, response.var, phat.var.1, phat.var.2,
     if(method == "subbootstrap"){
       RB.boot.w <- stats::weights(survey::as.svrepdesign(design = design, type = method, replicates=boot.B),"analysis")
       RB.aucw.b.1 <- as.vector(apply(
-        RB.boot.w, 2,
+        RB.boot.w[na.keep, , drop = FALSE], 2,
         function(x) wauc(
           response.var = response.var,
           phat.var = phat.var.1,
@@ -167,7 +185,7 @@ ht.paired <- function(design, response.var, phat.var.1, phat.var.2,
         )$AUCw[1]
       ))
       RB.aucw.b.2 <- as.vector(apply(
-        RB.boot.w, 2,
+        RB.boot.w[na.keep, , drop = FALSE], 2,
         function(x) wauc(
           response.var = response.var,
           phat.var = phat.var.2,

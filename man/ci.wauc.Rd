@@ -13,7 +13,8 @@ ci.wauc(
   method = c("JKn", "subbootstrap"),
   boot.B = 1000,
   boot.ci = c("normal", "quantile"),
-  conf.level = 0.95
+  conf.level = 0.95,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -39,6 +40,14 @@ The default option is \code{tag.nonevent = NULL}, which selects the class with t
 and \code{boot.ci = 'quantile'} for confidence intervals based on quantiles. Default is \code{boot.ci = 'normal'}. Only for \code{method = 'subbootstrap'}.}
 
 \item{conf.level}{A numeric value between 0 and 1 indicating the confidence level. Default is \code{conf.level = 0.95}, resulting in a 95\% CI.}
+
+\item{na.rm}{A logical value indicating how to handle observations with a
+missing response, predicted probability or sampling weight. If \code{FALSE}
+(the default), such observations raise an error. If \code{TRUE}, they are
+removed and a warning of class \code{svyROC_missing_removed} is signalled;
+note that the resulting estimate then refers to the complete-case
+sub-population rather than to the population the sampling weights describe,
+and is consistent for the latter only under missingness completely at random.}
 }
 \value{
 The output object of this function is a list of 2 elements containing the following information:

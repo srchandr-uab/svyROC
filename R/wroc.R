@@ -28,6 +28,13 @@
 #' If an optimal cut-off point is to be calculated, one of the following methods needs to be selected:
 #' `Youden`, `MaxProdSpSe`, `ROC01`, `MaxEfficiency`.
 #'
+#' @param na.rm A logical value indicating how to handle observations with a
+#' missing response, predicted probability or sampling weight. If \code{FALSE}
+#' (the default), such observations raise an error. If \code{TRUE}, they are
+#' removed and a warning of class \code{svyROC_missing_removed} is signalled;
+#' note that the resulting estimate then refers to the complete-case
+#' sub-population rather than to the population the sampling weights describe,
+#' and is consistent for the latter only under missingness completely at random.
 #' @return The output object of this function is a list of class `wroc`, which contains information about the weighted ROC curve of a logistic regression model and some of its components. In particular, this list contains a total of 5 or 6 elements (depending on the selected arguments) with the following information:
 #' - `wroc.curve`: this element is a list that contains three numerical vectors. Specifically,
 #'   - `Sew.values`: a vector of all the different values for the weighted estimate of the sensitivity across all the possible cut-off points.
@@ -87,7 +94,7 @@
 wroc <- function(response.var, phat.var, weights.var = NULL,
                  tag.event = NULL, tag.nonevent = NULL,
                  data = NULL, design = NULL,
-                 cutoff.method = NULL){
+                 cutoff.method = NULL, na.rm = FALSE){
 
   if(inherits(response.var, "character")){
     response.var <- data[,response.var]
@@ -112,6 +119,13 @@ wroc <- function(response.var, phat.var, weights.var = NULL,
   if(length(response.var) != length(phat.var) || length(response.var) != length(weights.var)){
     stop("Vectors indicating the responses, predicted probabilities and sampling weights must be the same length.")
   }
+
+  na.out <- handle.missing(list(response.var = response.var, phat.var = phat.var,
+                                weights.var = weights.var),
+                           na.rm = na.rm, two.class = "response.var")
+  response.var <- na.out$vars$response.var
+  phat.var <- na.out$vars$phat.var
+  weights.var <- na.out$vars$weights.var
 
   # Missing tags:
   if(is.null(tag.nonevent)){

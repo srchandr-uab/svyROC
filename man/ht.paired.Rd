@@ -13,7 +13,8 @@ ht.paired(
   tag.nonevent = NULL,
   alternative = c("two.sided", "greater", "less"),
   method = c("JKn", "subbootstrap"),
-  boot.B = 1000
+  boot.B = 1000,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -39,6 +40,14 @@ Default is \code{alternative = 'two.sided'}.}
 \code{method = 'JKn'} or \code{method = 'subbootstrap'}. Default is \code{method = 'JKn'}.}
 
 \item{boot.B}{A numeric value indicating the number of bootstrap resamples to be considered. Default is \code{boot.B=1000}. Only for \code{method = 'subbootstrap'}.}
+
+\item{na.rm}{A logical value indicating how to handle observations with a
+missing response, predicted probability or sampling weight. If \code{FALSE}
+(the default), such observations raise an error. If \code{TRUE}, they are
+removed and a warning of class \code{svyROC_missing_removed} is signalled;
+note that the resulting estimate then refers to the complete-case
+sub-population rather than to the population the sampling weights describe,
+and is consistent for the latter only under missingness completely at random.}
 }
 \value{
 The output object of this function is a list of 5 elements containing the following information:

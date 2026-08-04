@@ -24,6 +24,13 @@
 #' If \code{design = NULL}, information on the data set (argument \code{data})
 #' and/or sampling weights (argument \code{weights.var}) must be included.
 #'
+#' @param na.rm A logical value indicating how to handle observations with a
+#' missing response, predicted probability or sampling weight. If \code{FALSE}
+#' (the default), such observations raise an error. If \code{TRUE}, they are
+#' removed and a warning of class \code{svyROC_missing_removed} is signalled;
+#' note that the resulting estimate then refers to the complete-case
+#' sub-population rather than to the population the sampling weights describe,
+#' and is consistent for the latter only under missingness completely at random.
 #' @return The output of this function is a list of 4 elements containing the following information:
 #' - `Sew`: a numeric value indicating the weighted estimate of the sensitivity parameter.
 #' - `tags`: list containing one element with the following information:
@@ -65,7 +72,7 @@
 #'               phat.var = example_data_wroc$phat,
 #'               weights.var = example_data_wroc$weights,
 #'               tag.event = 1, cutoff.value = 0.5)
-wse <- function(response.var, phat.var, weights.var = NULL, tag.event = NULL, cutoff.value, data = NULL, design = NULL){
+wse <- function(response.var, phat.var, weights.var = NULL, tag.event = NULL, cutoff.value, data = NULL, design = NULL, na.rm = FALSE){
 
   if(missing(cutoff.value) || !is.numeric(cutoff.value)){stop("Please, indicate a numeric value in the 'cutoff.value' argument to be used as cut-off point.")}
 
@@ -92,6 +99,13 @@ wse <- function(response.var, phat.var, weights.var = NULL, tag.event = NULL, cu
   if(length(response.var) != length(phat.var) || length(response.var) != length(weights.var)){
     stop("Vectors indicating the responses, predicted probabilities and sampling weights must be the same length.")
   }
+
+  na.out <- handle.missing(list(response.var = response.var, phat.var = phat.var,
+                                weights.var = weights.var),
+                           na.rm = na.rm, two.class = "response.var")
+  response.var <- na.out$vars$response.var
+  phat.var <- na.out$vars$phat.var
+  weights.var <- na.out$vars$weights.var
 
   if(is.null(tag.event)){
     tag.event <- names(table(response.var)[which.min(table(response.var))])

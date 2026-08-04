@@ -18,7 +18,8 @@ corrected.wauc(
   RB.method = c("subbootstrap", "bootstrap"),
   k = 10,
   R = 1,
-  B = 200
+  B = 200,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -65,6 +66,14 @@ Default is \code{k=10}. Only applies for the \code{dCV} method.}
 \item{R}{A numeric value indicating the number of times the sample is partitioned. Default is \code{R=1}. Only applies for \code{dCV}, \code{split} or \code{extrapolation} methods.}
 
 \item{B}{A numeric value indicating the number of bootstrap resamples. Default is \code{B=200}. Only applies for \code{bootstrap} and  \code{subbootstrap} methods.}
+
+\item{na.rm}{A logical value indicating how to handle observations with a
+missing response, predicted probability or sampling weight. If \code{FALSE}
+(the default), such observations raise an error. If \code{TRUE}, they are
+removed and a warning of class \code{svyROC_missing_removed} is signalled;
+note that the resulting estimate then refers to the complete-case
+sub-population rather than to the population the sampling weights describe,
+and is consistent for the latter only under missingness completely at random.}
 }
 \value{
 The output object of this function is a list of 5 elements containing the following information:

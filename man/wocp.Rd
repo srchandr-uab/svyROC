@@ -12,7 +12,8 @@ wocp(
   tag.nonevent = NULL,
   method = c("Youden", "MaxProdSpSe", "ROC01", "MaxEfficiency"),
   data = NULL,
-  design = NULL
+  design = NULL,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -47,6 +48,14 @@ or the sampling design should be indicated in the argument \code{design}.}
 \code{survey::svydesign} indicating the complex sampling design of the data.
 If \code{design = NULL}, information on the data set (argument \code{data})
 and/or sampling weights (argument \code{weights.var}) must be included.}
+
+\item{na.rm}{A logical value indicating how to handle observations with a
+missing response, predicted probability or sampling weight. If \code{FALSE}
+(the default), such observations raise an error. If \code{TRUE}, they are
+removed and a warning of class \code{svyROC_missing_removed} is signalled;
+note that the resulting estimate then refers to the complete-case
+sub-population rather than to the population the sampling weights describe,
+and is consistent for the latter only under missingness completely at random.}
 }
 \value{
 The output of this function is an object of class \code{wocp}. This object is a list that contains information about the following 4 elements:

@@ -43,6 +43,13 @@
 #' Developments in Statistical Modelling. IWSM 2024. Contributions to Statistics.
 #' Springer, Cham. https://doi.org/10.1007/978-3-031-65723-8_7
 #'
+#' @param na.rm A logical value indicating how to handle observations with a
+#' missing response, predicted probability or sampling weight. If \code{FALSE}
+#' (the default), such observations raise an error. If \code{TRUE}, they are
+#' removed and a warning of class \code{svyROC_missing_removed} is signalled;
+#' note that the resulting estimate then refers to the complete-case
+#' sub-population rather than to the population the sampling weights describe,
+#' and is consistent for the latter only under missingness completely at random.
 #' @return The output object of this function is a list of 5 elements containing the following information:
 #' - `corrected.AUCw`: the corrected estimate of the weighted AUC.
 #' - `correction.method`: the selected correction method.
@@ -90,7 +97,7 @@ corrected.wauc <- function(data = NULL, formula, tag.event = NULL, tag.nonevent 
                            weights.var = NULL, strata.var = NULL, cluster.var = NULL, design = NULL,
                            method = c("dCV", "JKn", "RB"),
                            dCV.method = c("average", "pooling"), RB.method = c("subbootstrap", "bootstrap"),
-                           k = 10, R = 1, B = 200){
+                           k = 10, R = 1, B = 200, na.rm = FALSE){
 
   # Identify the response variable:
   response.var <- as.character(formula[2])
@@ -101,6 +108,16 @@ corrected.wauc <- function(data = NULL, formula, tag.event = NULL, tag.nonevent 
     strata.var <- as.character(design$call$strata[2])
     cluster.var <- as.character(design$call$ids[2])
   }
+
+  # Filter the data frame itself: this function refits models internally and
+  # compares fitted.values against the full weight column, so an incomplete row
+  # would leave those two vectors different lengths. `design` is used only to
+  # read column names above, so subsetting `data` is sufficient.
+  model.vars <- unique(c(all.vars(formula), weights.var, strata.var, cluster.var))
+  model.vars <- model.vars[model.vars %in% names(data)]
+  na.out <- handle.missing(as.list(data[, model.vars, drop = FALSE]),
+                           na.rm = na.rm, two.class = response.var)
+  data <- data[na.out$keep, , drop = FALSE]
 
   if(length(table(data[,response.var]))!=2){stop("Response variable must have two classes.")}
 

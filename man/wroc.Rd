@@ -12,7 +12,8 @@ wroc(
   tag.nonevent = NULL,
   data = NULL,
   design = NULL,
-  cutoff.method = NULL
+  cutoff.method = NULL,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -48,6 +49,14 @@ and/or sampling weights (argument \code{weights.var}) must be included.}
 If \code{cutoff.method = NULL}, then no optimal cut-off point is calculated.
 If an optimal cut-off point is to be calculated, one of the following methods needs to be selected:
 \code{Youden}, \code{MaxProdSpSe}, \code{ROC01}, \code{MaxEfficiency}.}
+
+\item{na.rm}{A logical value indicating how to handle observations with a
+missing response, predicted probability or sampling weight. If \code{FALSE}
+(the default), such observations raise an error. If \code{TRUE}, they are
+removed and a warning of class \code{svyROC_missing_removed} is signalled;
+note that the resulting estimate then refers to the complete-case
+sub-population rather than to the population the sampling weights describe,
+and is consistent for the latter only under missingness completely at random.}
 }
 \value{
 The output object of this function is a list of class \code{wroc}, which contains information about the weighted ROC curve of a logistic regression model and some of its components. In particular, this list contains a total of 5 or 6 elements (depending on the selected arguments) with the following information:
